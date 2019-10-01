@@ -1,0 +1,289 @@
+---
+title: "Comparing gemma2 output with that of Zhou's GEMMA"
+author: "Frederick Boehm"
+date: "January 2, 2018"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparing gemma2 output with that of Zhou's GEMMA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: gemma.bib
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Overview
+
+`gemma2` is an R implementation of an EM algorithm [@zhou2014efficient] to fit a multivariate linear mixed effects model. Specifically, it fits, via restricted maximum likelihood (REML), the model:
+
+$$vec(Y) = X vec(B) + vec(G) + vec(E)$$
+
+where $Y$ is a n by 2 phenotypes matrix, with each row being a single subject and each column a distinct phenotype. $X$ is a 2n by 2f matrix of genotypes, where $n$ is the sample size and $f$ is the number of founder lines. $X$ has a block-diagonal structure, so that it contains, on the diagonal, two $n$ by $f$ blocks of genotype data. The two off-diagonal blocks are all zeros. $B$ is a $f$ by $2$ matrix of founder allele effect sizes. $G$ is a $n$ by $2$ matrix of polygenic random effects that follows the distribution:
+
+$$G \sim MN_{n x 2}(0, K, V_g)$$
+
+where $MN$ denotes the matrix-variate normal distribution with mean being the n by 2 zero matrix, $K$ - a kinship matrix - being the n by n covariance among rows, and $V_g$ being the 2 by 2 covariance matrix among columns. 
+
+$E$ is a n by 2 matrix of random errors that follows the distribution:
+
+$$E \sim MN_{n x 2}(0, I_n, V_e)$$ where $I_n$ is the n by n identity matrix.
+
+Additionally, we have the usual assumption that $E$ and $G$ are independent.
+
+By applying the vectorization operator, "vec", we see that:
+
+$$vec(Y) \sim N(Xvec(B), V_g \otimes K + V_e \otimes I_n)$$
+where $\otimes$ denotes the Kronecker product.
+
+## Writing `gemma2`
+
+I wrote `gemma2` by translating, line by line, the C++ code for version 0.96 of GEMMA. Specifically, I drew heavily on the file [mvlmm.cpp](https://github.com/genetics-statistics/GEMMA/blob/master/src/mvlmm.cpp) when writing the update functions for the EM algorithm. 
+
+## Algorithmic differences from Zhou's GEMMA
+
+When fitting the above multivariate linear mixed effects model, Zhou's GEMMA uses first an EM algorithm to get reasonable starting values for input to a Newton-Raphson algorithm. The model fit is taken as the output of the Newton-Raphson algorithm. They explain that the reason for doing this is that the Newton-Raphson algorithm - with reasonable starting values - converges much faster than does the EM algorithm.
+I elected to not implement the Newton-Raphson algorithm. Instead, I use exclusively the EM algorithm output. For that reason, I can't merely look at the output of Zhou's GEMMA and compare it directly to my output from `gemma2`. Zhou's GEMMA doesn't print the (intermediate) output of its EM algorithm. 
+
+
+
+
+
+
+## Comparing Zhou's GEMMA (v0.96) EM output with that of `gemma2`
+
+To compare the output of Zhou's GEMMA with that of `gemma2`, I decided to insert print statements in the C++ code of GEMMA. That way, when I run GEMMA, I get verbose output of intermediate results. That is, I can see exactly how each component is updated in the EM algorithm because I print the numerical values at each iteration of the GEMMA EM algorithm. 
+
+I can then ask the question: 
+
+> for a set of starting values, does the first iteration of EM updates by  GEMMA give the same values as the first iteration of EM updates by `gemma2`?
+
+There is an additional complication. GEMMA is set up so that you can't merely specify a chosen set of starting values for EM algorithm. Rather, it takes a data set as input. GEMMA then fit univariate LMMs to get the starting values for the variance components, $V_g$ and $V_e$. Note that the off-diagonal elements of $V_g$ and $V_e$ start at zero for GEMMA's methods. In other words, GEMMA takes the inputted data and fits a univariate LMM for each phenotype. It then uses those fitted values for input to the EM algorithm for a multivariate LMM, before, ultimately, using a NR algorithm to get the final mvlmm fit.
+
+Because of how I've added the print statements to GEMMA's C++ code, I'll need to look at the printed output from GEMMA to ensure that I use the same starting values for `gemma2`. In other words, I can't pre-specify starting values and use them in both GEMMA and `gemma2`. Instead, I need to specify a data set, then look to see where GEMMA starts its EM algorithm for mvLMM, and use input those same starting values into `gemma2`.
+
+## Running `gemma2` with example data 
+
+First, we read the data into R.
+
+```{r}
+readr::read_csv(system.file("extdata", "mouse100.geno.txt", package = "gemma2"), col_names = FALSE) -> geno
+readr::read_tsv(system.file("extdata", "mouse100.pheno.txt", package = "gemma2"), col_names = FALSE) -> pheno
+readr::read_tsv(system.file("extdata", "mouse100.cXX.txt", package = "gemma2"), col_names = FALSE)[, 1:100] -> kinship
+
+```
+
+We then isolate the genotypes for a single marker and convert it to a matrix.
+
+
+```{r}
+# isolate first SNP
+g1 <- geno[1, - c(1:3)] # first 3 columns are SNP annotations!
+t(as.matrix(g1)) -> g1m
+as.matrix(pheno[, c(1, 6)]) -> phe16
+```
+
+
+We load the `gemma2` R package before we decompose the kinship matrix into eigenvalues and eigenvectors.
+
+```{r}
+library(gemma2)
+e_out <- eigen2(kinship)
+```
+
+
+We then multiply the genotypes matrix by the eigenvectors:
+
+```{r}
+t(g1m) %*% e_out$vectors -> X1U
+```
+
+
+We then call the function - `MphEM` - that uses the EM algorithm:
+
+```{r}
+MphEM(eval = e_out$values, 
+      X = X1U, 
+      Y = t(phe16) %*% e_out$vectors, 
+      V_g = matrix(c(1.91352, 0, 0, 0.530827), nrow = 2), 
+      V_e = matrix(c(0.320028, 0, 0, 0.561589), nrow = 2)
+      ) -> foo
+```
+
+The output of `MphEM` has a complicated structure. It's a list of lists.
+
+```{r}
+length(foo)
+class(foo)
+```
+
+There is one list for every iteration of the EM algorithm. For each iteration of the EM algorithm, the list contains 17 components. 
+
+```{r}
+sapply(FUN = length, X = foo)
+```
+
+We can examine the code for `MphEM` to understand the outputs:
+
+```{r}
+MphEM
+```
+
+We see that the first component is the log-likelihood. 
+
+We can verify that the log-likelihood uniformly increases (over EM iterations) with the following code:
+
+```{r}
+sapply(FUN = function(x)x[[1]], X = foo) -> loglik
+plot(loglik)
+```
+
+## Direct comparison of GEMMA results with those of `gemma2`
+
+We can run GEMMA (v0.96) with a collection of data in text files that I distribute with this package. They are a subset of the data that come with GEMMA.
+
+According to GEMMA v0.96, we should first be updating Vg from its initial value:
+$$\left(\begin{array}{cc}
+1.91352 & 0\\
+0 & 0.530827
+\end{array}\right)$$
+
+to 
+
+$$\left(\begin{array}{cc}
+1.91352 & 0.0700492\\
+0.0700492 & 0.530827
+\end{array}\right)$$
+
+in the first EM iteration. 
+
+We then ask, 
+
+> when we give `gemma2::MphEM()` the same starting values and same data, do we see that the first update of $V_g$ coincides with that from GEMMA (above)? 
+
+```{r}
+e_out <- eigen2(as.matrix(kinship))
+center_kinship(as.matrix(kinship)) -> kinship_centered
+ec_out <- eigen2(kinship_centered)
+```
+
+```{r}
+## first two
+MphEM(eval = ec_out$values, 
+      X = t(g1m) %*% ec_out$vectors, 
+      Y = t(phe16) %*% ec_out$vectors, 
+      V_g = matrix(c(1.91352, 0, 0, 0.530827), nrow = 2), 
+      V_e = matrix(c(0.320028, 0, 0, 0.561589), nrow = 2)
+      ) -> bar00
+MphEM(eval = e_out$values, 
+      X = t(g1m) %*% e_out$vectors, 
+      Y = t(phe16) %*% e_out$vectors, 
+      V_g = matrix(c(1.91352, 0, 0, 0.530827), nrow = 2), 
+      V_e = matrix(c(0.320028, 0, 0, 0.561589), nrow = 2)
+      ) -> bar10
+## second two
+MphEM(eval = ec_out$values, 
+      X = t(cbind(1, g1m)) %*% ec_out$vectors, 
+      Y = t(phe16) %*% ec_out$vectors, 
+      V_g = matrix(c(1.91352, 0, 0, 0.530827), nrow = 2), 
+      V_e = matrix(c(0.320028, 0, 0, 0.561589), nrow = 2)
+      ) -> bar01
+
+MphEM(eval = e_out$values, 
+      X = t(cbind(1, g1m)) %*% e_out$vectors, 
+      Y = t(phe16) %*% e_out$vectors, 
+      V_g = matrix(c(1.91352, 0, 0, 0.530827), nrow = 2), 
+      V_e = matrix(c(0.320028, 0, 0, 0.561589), nrow = 2)
+      ) -> bar11
+
+```
+
+We see that the centering of the kinship matrix doesn't change the results here. Look also at the convergence points:
+
+```{r}
+bar00[[length(bar00)]][[2]]
+bar01[[length(bar01)]][[2]]
+bar10[[length(bar10)]][[2]]
+bar11[[length(bar11)]][[2]]
+```
+
+I see now that the X, as inputted to MphEM is printed 3 times in each of my output files. I'm not sure why this is.
+
+
+```{r}
+t(cbind(1, g1m)) %*% e_out$vectors
+```
+
+I see that the third instance of "X," - in the file of GEMMA output - specifies that X has two rows, while the first two seem to say that X has only one row. Furthermore, it seems that the third instance of "X," has the same entries that I get when calculating `X %*% U` - namely, the first column is -10 and -8.2, the remaining entries in the first row are near zero, and the remaining entries in the second row begin with 0.52.
+
+
+I see now that I misread the output file from GEMMA. Within it, there are actually 3 calls (ie, per SNP) to MphEM. It's the third call that we want to reproduce.
+
+From the above output, we see that the initial values, for the third call to MphEM() are:
+
+$$V_g = \left(\begin{array}{cc}
+2.73	& -0.39	\\
+-0.39	& 0.74
+\end{array}
+\right)$$
+
+and 
+
+$$V_e = \left(\begin{array}{cc}
+0.15 & 0.27 \\
+0.27 & 0.50 
+\end{array}
+\right)$$
+
+and, after a single update, the matrices are:
+
+$$V_g = \left(\begin{array}{cc}
+2.74	& -0.40	\\
+-0.40	& 0.74
+\end{array}
+\right)$$
+
+and 
+
+$$V_e = \left(\begin{array}{cc}
+0.15 & 0.27 \\
+0.27 & 0.51 
+\end{array}
+\right)$$
+
+Can we get our `gemma2` R code to do this? 
+
+```{r}
+MphEM(eval = e_out$values, 
+      X = t(cbind(1, g1m)) %*% e_out$vectors, 
+      Y = t(phe16) %*% e_out$vectors, 
+      V_g = matrix(c(2.73, - 0.39, - 0.39, 0.74), nrow = 2), 
+      V_e = matrix(c(0.15, 0.27, 0.27, 0.50), nrow = 2)
+      ) -> out1
+out1[[1]][c(2:3)]
+```
+
+Now try with `ec_out`
+
+```{r}
+MphEM(eval = ec_out$values, 
+      X = t(cbind(1, g1m)) %*% ec_out$vectors, 
+      Y = t(phe16) %*% ec_out$vectors, 
+      V_g = matrix(c(2.731324, - 0.394865, - 0.394865, 0.737116), nrow = 2), 
+      V_e = matrix(c(0.147467, 0.272090, 0.272090, 0.502031), nrow = 2)
+      ) -> out1
+out1[[1]][c(2:3)]
+
+```
+
+The results, above, are accurate to within rounding. 
+
+
+
+
+## References
+
