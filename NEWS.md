@@ -1,3 +1,28 @@
+# gemma2 0.1.3
+
+## Major changes
+
+* None
+
+## Minor changes
+
+* added cran-comments.md to .Rbuildignore per CRAN requirements.
+
+
+
+# gemma2 0.1.2
+
+## Major changes
+
+* None
+
+## Minor changes
+
+* resumed using package Matrix.
+
+
+
+
 # gemma2 0.1.1
 
 ## Major changes

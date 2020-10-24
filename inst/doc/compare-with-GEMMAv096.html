@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Frederick Boehm" />
 
@@ -17,30 +16,108 @@
 
 <title>Comparing gemma2 output with that of Zhou’s GEMMA</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+<style type="text/css">
+a.anchor-section {margin-left: 10px; visibility: hidden; color: inherit;}
+a.anchor-section::before {content: '#';}
+.hasAnchor:hover a.anchor-section {visibility: visible;}
+</style>
+<script>// Anchor sections v1.0 written by Atsushi Yasumoto on Oct 3rd, 2020.
+document.addEventListener('DOMContentLoaded', function() {
+  // Do nothing if AnchorJS is used
+  if (typeof window.anchors === 'object' && anchors.hasOwnProperty('hasAnchorJSLink')) {
+    return;
+  }
+
+  const h = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+  // Do nothing if sections are already anchored
+  if (Array.from(h).some(x => x.classList.contains('hasAnchor'))) {
+    return null;
+  }
+
+  // Use section id when pandoc runs with --section-divs
+  const section_id = function(x) {
+    return ((x.classList.contains('section') || (x.tagName === 'SECTION'))
+            ? x.id : '');
+  };
+
+  // Add anchors
+  h.forEach(function(x) {
+    const id = x.id || section_id(x.parentElement);
+    if (id === '') {
+      return null;
+    }
+    let anchor = document.createElement('a');
+    anchor.href = '#' + id;
+    anchor.classList = ['anchor-section'];
+    x.classList.add('hasAnchor');
+    x.appendChild(anchor);
+  });
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -49,9 +126,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -118,9 +195,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -289,7 +363,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -341,137 +416,140 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="running-gemma2-with-example-data" class="section level2">
 <h2>Running <code>gemma2</code> with example data</h2>
 <p>First, we read the data into R.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.geno.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>) -&gt;<span class="st"> </span>geno</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co">#&gt; Parsed with column specification:</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co">#&gt; cols(</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt;   .default = col_double(),</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">#&gt;   X1 = col_character(),</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co">#&gt;   X2 = col_character(),</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="co">#&gt;   X3 = col_character()</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="co">#&gt; )</span></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">#&gt; See spec(...) for full column specifications.</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.pheno.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>) -&gt;<span class="st"> </span>pheno</a>
-<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="co">#&gt; Parsed with column specification:</span></a>
-<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="co">#&gt; cols(</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="co">#&gt;   X1 = col_double(),</span></a>
-<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="co">#&gt;   X2 = col_double(),</span></a>
-<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="co">#&gt;   X3 = col_double(),</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="co">#&gt;   X4 = col_double(),</span></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="co">#&gt;   X5 = col_double(),</span></a>
-<a class="sourceLine" id="cb1-18" data-line-number="18"><span class="co">#&gt;   X6 = col_double()</span></a>
-<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="co">#&gt; )</span></a>
-<a class="sourceLine" id="cb1-20" data-line-number="20">readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.cXX.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>)[, <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>] -&gt;<span class="st"> </span>kinship</a>
-<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="co">#&gt; Parsed with column specification:</span></a>
-<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="co">#&gt; cols(</span></a>
-<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="co">#&gt;   .default = col_double(),</span></a>
-<a class="sourceLine" id="cb1-24" data-line-number="24"><span class="co">#&gt;   X101 = col_logical()</span></a>
-<a class="sourceLine" id="cb1-25" data-line-number="25"><span class="co">#&gt; )</span></a>
-<a class="sourceLine" id="cb1-26" data-line-number="26"><span class="co">#&gt; See spec(...) for full column specifications.</span></a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.geno.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>) -&gt;<span class="st"> </span>geno</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; </span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; ── Column specification ────────────────────────────────────────────────────────</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; cols(</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt;   .default = col_double(),</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt;   X1 = col_character(),</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt;   X2 = col_character(),</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt;   X3 = col_character()</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; )</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt; ℹ Use `spec()` for the full column specifications.</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a>readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.pheno.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>) -&gt;<span class="st"> </span>pheno</span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; </span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="co">#&gt; ── Column specification ────────────────────────────────────────────────────────</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a><span class="co">#&gt; cols(</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a><span class="co">#&gt;   X1 = col_double(),</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a><span class="co">#&gt;   X2 = col_double(),</span></span>
+<span id="cb1-17"><a href="#cb1-17"></a><span class="co">#&gt;   X3 = col_double(),</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a><span class="co">#&gt;   X4 = col_double(),</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a><span class="co">#&gt;   X5 = col_double(),</span></span>
+<span id="cb1-20"><a href="#cb1-20"></a><span class="co">#&gt;   X6 = col_double()</span></span>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="co">#&gt; )</span></span>
+<span id="cb1-22"><a href="#cb1-22"></a>readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mouse100.cXX.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;gemma2&quot;</span>), <span class="dt">col_names =</span> <span class="ot">FALSE</span>)[, <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>] -&gt;<span class="st"> </span>kinship</span>
+<span id="cb1-23"><a href="#cb1-23"></a><span class="co">#&gt; </span></span>
+<span id="cb1-24"><a href="#cb1-24"></a><span class="co">#&gt; ── Column specification ────────────────────────────────────────────────────────</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a><span class="co">#&gt; cols(</span></span>
+<span id="cb1-26"><a href="#cb1-26"></a><span class="co">#&gt;   .default = col_double(),</span></span>
+<span id="cb1-27"><a href="#cb1-27"></a><span class="co">#&gt;   X101 = col_logical()</span></span>
+<span id="cb1-28"><a href="#cb1-28"></a><span class="co">#&gt; )</span></span>
+<span id="cb1-29"><a href="#cb1-29"></a><span class="co">#&gt; ℹ Use `spec()` for the full column specifications.</span></span></code></pre></div>
 <p>We then isolate the genotypes for a single marker and convert it to a matrix.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co"># isolate first SNP</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">g1 &lt;-<span class="st"> </span>geno[<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>)] <span class="co"># first 3 columns are SNP annotations!</span></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">t</span>(<span class="kw">as.matrix</span>(g1)) -&gt;<span class="st"> </span>g1m</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">as.matrix</span>(pheno[, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">6</span>)]) -&gt;<span class="st"> </span>phe16</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># isolate first SNP</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>g1 &lt;-<span class="st"> </span>geno[<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>)] <span class="co"># first 3 columns are SNP annotations!</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="kw">t</span>(<span class="kw">as.matrix</span>(g1)) -&gt;<span class="st"> </span>g1m</span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="kw">as.matrix</span>(pheno[, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">6</span>)]) -&gt;<span class="st"> </span>phe16</span></code></pre></div>
 <p>We load the <code>gemma2</code> R package before we decompose the kinship matrix into eigenvalues and eigenvectors.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">library</span>(gemma2)</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">e_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(kinship)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">library</span>(gemma2)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>e_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(kinship)</span></code></pre></div>
 <p>We then multiply the genotypes matrix by the eigenvectors:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors -&gt;<span class="st"> </span>X1U</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors -&gt;<span class="st"> </span>X1U</span></code></pre></div>
 <p>We then call the function - <code>MphEM</code> - that uses the EM algorithm:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">      <span class="dt">X =</span> X1U, </a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">      ) -&gt;<span class="st"> </span>foo</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </span>
+<span id="cb5-2"><a href="#cb5-2"></a>      <span class="dt">X =</span> X1U, </span>
+<span id="cb5-3"><a href="#cb5-3"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb5-4"><a href="#cb5-4"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb5-5"><a href="#cb5-5"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb5-6"><a href="#cb5-6"></a>      ) -&gt;<span class="st"> </span>foo</span></code></pre></div>
 <p>The output of <code>MphEM</code> has a complicated structure. It’s a list of lists.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">length</span>(foo)</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="co">#&gt; [1] 1</span></a>
-<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="kw">class</span>(foo)</a>
-<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">#&gt; [1] &quot;list&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">length</span>(foo)</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="kw">class</span>(foo)</span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [1] &quot;list&quot;</span></span></code></pre></div>
 <p>There is one list for every iteration of the EM algorithm. For each iteration of the EM algorithm, the list contains 17 components.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">sapply</span>(<span class="dt">FUN =</span> length, <span class="dt">X =</span> foo)</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">#&gt; [1] 17</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">sapply</span>(<span class="dt">FUN =</span> length, <span class="dt">X =</span> foo)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; [1] 17</span></span></code></pre></div>
 <p>We can examine the code for <code>MphEM</code> to understand the outputs:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1">MphEM</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="co">#&gt; function (max_iter = 10000, max_prec = 1/1e+06, eval, X, Y, V_g, </span></a>
-<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="co">#&gt;     V_e, verbose_output = FALSE) </span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4"><span class="co">#&gt; {</span></a>
-<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="co">#&gt;     n_size &lt;- length(eval)</span></a>
-<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="co">#&gt;     c_size &lt;- nrow(X)</span></a>
-<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="co">#&gt;     d_size &lt;- nrow(Y)</span></a>
-<a class="sourceLine" id="cb8-8" data-line-number="8"><span class="co">#&gt;     dc_size &lt;- c_size * d_size</span></a>
-<a class="sourceLine" id="cb8-9" data-line-number="9"><span class="co">#&gt;     XXt &lt;- X %*% t(X)</span></a>
-<a class="sourceLine" id="cb8-10" data-line-number="10"><span class="co">#&gt;     logl_const &lt;- -(n_size - c_size) * d_size * log(2 * pi)/2 + </span></a>
-<a class="sourceLine" id="cb8-11" data-line-number="11"><span class="co">#&gt;         d_size * log(det(XXt))/2</span></a>
-<a class="sourceLine" id="cb8-12" data-line-number="12"><span class="co">#&gt;     out &lt;- list()</span></a>
-<a class="sourceLine" id="cb8-13" data-line-number="13"><span class="co">#&gt;     for (t in 1:max_iter) {</span></a>
-<a class="sourceLine" id="cb8-14" data-line-number="14"><span class="co">#&gt;         ep_out &lt;- eigen_proc(V_g, V_e)</span></a>
-<a class="sourceLine" id="cb8-15" data-line-number="15"><span class="co">#&gt;         logdet_Ve &lt;- ep_out[[1]]</span></a>
-<a class="sourceLine" id="cb8-16" data-line-number="16"><span class="co">#&gt;         UltVeh &lt;- ep_out[[2]]</span></a>
-<a class="sourceLine" id="cb8-17" data-line-number="17"><span class="co">#&gt;         UltVehi &lt;- ep_out[[3]]</span></a>
-<a class="sourceLine" id="cb8-18" data-line-number="18"><span class="co">#&gt;         D_l &lt;- ep_out[[4]]</span></a>
-<a class="sourceLine" id="cb8-19" data-line-number="19"><span class="co">#&gt;         cq_out &lt;- calc_qi(eval, D_l, X)</span></a>
-<a class="sourceLine" id="cb8-20" data-line-number="20"><span class="co">#&gt;         Qi &lt;- cq_out[[1]]</span></a>
-<a class="sourceLine" id="cb8-21" data-line-number="21"><span class="co">#&gt;         lndetQ &lt;- cq_out[[2]]</span></a>
-<a class="sourceLine" id="cb8-22" data-line-number="22"><span class="co">#&gt;         UltVehiY &lt;- UltVehi %*% Y</span></a>
-<a class="sourceLine" id="cb8-23" data-line-number="23"><span class="co">#&gt;         xHiy &lt;- calc_XHiY(eval, D_l, X, UltVehiY)</span></a>
-<a class="sourceLine" id="cb8-24" data-line-number="24"><span class="co">#&gt;         logl_new &lt;- logl_const + MphCalcLogL(eval = eval, xHiy = xHiy, </span></a>
-<a class="sourceLine" id="cb8-25" data-line-number="25"><span class="co">#&gt;             D_l = D_l, UltVehiY = UltVehiY, Qi = Qi) - 0.5 * </span></a>
-<a class="sourceLine" id="cb8-26" data-line-number="26"><span class="co">#&gt;             n_size * logdet_Ve</span></a>
-<a class="sourceLine" id="cb8-27" data-line-number="27"><span class="co">#&gt;         logl_new &lt;- logl_new - 0.5 * (lndetQ - c_size * logdet_Ve)</span></a>
-<a class="sourceLine" id="cb8-28" data-line-number="28"><span class="co">#&gt;         if (t &gt; 1) {</span></a>
-<a class="sourceLine" id="cb8-29" data-line-number="29"><span class="co">#&gt;             if (logl_new - logl_old &lt; max_prec) {</span></a>
-<a class="sourceLine" id="cb8-30" data-line-number="30"><span class="co">#&gt;                 break</span></a>
-<a class="sourceLine" id="cb8-31" data-line-number="31"><span class="co">#&gt;             }</span></a>
-<a class="sourceLine" id="cb8-32" data-line-number="32"><span class="co">#&gt;         }</span></a>
-<a class="sourceLine" id="cb8-33" data-line-number="33"><span class="co">#&gt;         logl_old &lt;- logl_new</span></a>
-<a class="sourceLine" id="cb8-34" data-line-number="34"><span class="co">#&gt;         co_out &lt;- calc_omega(eval, D_l)</span></a>
-<a class="sourceLine" id="cb8-35" data-line-number="35"><span class="co">#&gt;         OmegaU &lt;- co_out[[1]]</span></a>
-<a class="sourceLine" id="cb8-36" data-line-number="36"><span class="co">#&gt;         OmegaE &lt;- co_out[[2]]</span></a>
-<a class="sourceLine" id="cb8-37" data-line-number="37"><span class="co">#&gt;         UltVehiB &lt;- UpdateRL_B(xHiy, Qi, d_size = nrow(Y))</span></a>
-<a class="sourceLine" id="cb8-38" data-line-number="38"><span class="co">#&gt;         UltVehiBX &lt;- UltVehiB %*% X</span></a>
-<a class="sourceLine" id="cb8-39" data-line-number="39"><span class="co">#&gt;         UltVehiU &lt;- update_u(OmegaE, UltVehiY, UltVehiBX)</span></a>
-<a class="sourceLine" id="cb8-40" data-line-number="40"><span class="co">#&gt;         UltVehiE &lt;- update_e(UltVehiY, UltVehiBX, UltVehiU)</span></a>
-<a class="sourceLine" id="cb8-41" data-line-number="41"><span class="co">#&gt;         U_hat &lt;- t(UltVeh) %*% UltVehiU</span></a>
-<a class="sourceLine" id="cb8-42" data-line-number="42"><span class="co">#&gt;         E_hat &lt;- t(UltVeh) %*% UltVehiE</span></a>
-<a class="sourceLine" id="cb8-43" data-line-number="43"><span class="co">#&gt;         B &lt;- t(UltVeh) %*% UltVehiB</span></a>
-<a class="sourceLine" id="cb8-44" data-line-number="44"><span class="co">#&gt;         cs_out &lt;- calc_sigma(eval = eval, D_l = D_l, X = X, OmegaU = OmegaU, </span></a>
-<a class="sourceLine" id="cb8-45" data-line-number="45"><span class="co">#&gt;             OmegaE = OmegaE, UltVeh = UltVeh, Qi = Qi)</span></a>
-<a class="sourceLine" id="cb8-46" data-line-number="46"><span class="co">#&gt;         Sigma_ee &lt;- cs_out[[1]]</span></a>
-<a class="sourceLine" id="cb8-47" data-line-number="47"><span class="co">#&gt;         Sigma_uu &lt;- cs_out[[2]]</span></a>
-<a class="sourceLine" id="cb8-48" data-line-number="48"><span class="co">#&gt;         uv_out &lt;- update_v(eval, U_hat, E_hat, Sigma_uu, Sigma_ee)</span></a>
-<a class="sourceLine" id="cb8-49" data-line-number="49"><span class="co">#&gt;         V_g &lt;- uv_out[[1]]</span></a>
-<a class="sourceLine" id="cb8-50" data-line-number="50"><span class="co">#&gt;         V_e &lt;- uv_out[[2]]</span></a>
-<a class="sourceLine" id="cb8-51" data-line-number="51"><span class="co">#&gt;         if (verbose_output) {</span></a>
-<a class="sourceLine" id="cb8-52" data-line-number="52"><span class="co">#&gt;             out[[t]] &lt;- list(logl_new = logl_new, Vg = V_g, Ve = V_e, </span></a>
-<a class="sourceLine" id="cb8-53" data-line-number="53"><span class="co">#&gt;                 Sigma_uu = Sigma_uu, Sigma_ee = Sigma_ee, B = B, </span></a>
-<a class="sourceLine" id="cb8-54" data-line-number="54"><span class="co">#&gt;                 U_hat = U_hat, E_hat = E_hat, OmegaU = OmegaU, </span></a>
-<a class="sourceLine" id="cb8-55" data-line-number="55"><span class="co">#&gt;                 OmegaE = OmegaE, logdet_Ve = logdet_Ve, UltVeh = UltVeh, </span></a>
-<a class="sourceLine" id="cb8-56" data-line-number="56"><span class="co">#&gt;                 UltVehi = UltVehi, Dl = D_l, xHiy = xHiy, logl_const = logl_const, </span></a>
-<a class="sourceLine" id="cb8-57" data-line-number="57"><span class="co">#&gt;                 UltVehiU = UltVehiU)</span></a>
-<a class="sourceLine" id="cb8-58" data-line-number="58"><span class="co">#&gt;         }</span></a>
-<a class="sourceLine" id="cb8-59" data-line-number="59"><span class="co">#&gt;         else {</span></a>
-<a class="sourceLine" id="cb8-60" data-line-number="60"><span class="co">#&gt;             out[[1]] &lt;- list(logl_new = logl_new, Vg = V_g, Ve = V_e, </span></a>
-<a class="sourceLine" id="cb8-61" data-line-number="61"><span class="co">#&gt;                 Sigma_uu = Sigma_uu, Sigma_ee = Sigma_ee, B = B, </span></a>
-<a class="sourceLine" id="cb8-62" data-line-number="62"><span class="co">#&gt;                 U_hat = U_hat, E_hat = E_hat, OmegaU = OmegaU, </span></a>
-<a class="sourceLine" id="cb8-63" data-line-number="63"><span class="co">#&gt;                 OmegaE = OmegaE, logdet_Ve = logdet_Ve, UltVeh = UltVeh, </span></a>
-<a class="sourceLine" id="cb8-64" data-line-number="64"><span class="co">#&gt;                 UltVehi = UltVehi, Dl = D_l, xHiy = xHiy, logl_const = logl_const, </span></a>
-<a class="sourceLine" id="cb8-65" data-line-number="65"><span class="co">#&gt;                 UltVehiU = UltVehiU)</span></a>
-<a class="sourceLine" id="cb8-66" data-line-number="66"><span class="co">#&gt;         }</span></a>
-<a class="sourceLine" id="cb8-67" data-line-number="67"><span class="co">#&gt;     }</span></a>
-<a class="sourceLine" id="cb8-68" data-line-number="68"><span class="co">#&gt;     if (length(out) == max_iter) {</span></a>
-<a class="sourceLine" id="cb8-69" data-line-number="69"><span class="co">#&gt;         warning(&quot;EM algorithm didn't converge.&quot;)</span></a>
-<a class="sourceLine" id="cb8-70" data-line-number="70"><span class="co">#&gt;     }</span></a>
-<a class="sourceLine" id="cb8-71" data-line-number="71"><span class="co">#&gt;     return(out)</span></a>
-<a class="sourceLine" id="cb8-72" data-line-number="72"><span class="co">#&gt; }</span></a>
-<a class="sourceLine" id="cb8-73" data-line-number="73"><span class="co">#&gt; &lt;bytecode: 0x55e7dbfb9fe0&gt;</span></a>
-<a class="sourceLine" id="cb8-74" data-line-number="74"><span class="co">#&gt; &lt;environment: namespace:gemma2&gt;</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>MphEM</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; function (max_iter = 10000, max_prec = 1/1e+06, eval, X, Y, V_g, </span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt;     V_e, verbose_output = FALSE) </span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#&gt; {</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt;     n_size &lt;- length(eval)</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="co">#&gt;     c_size &lt;- nrow(X)</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt;     d_size &lt;- nrow(Y)</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="co">#&gt;     dc_size &lt;- c_size * d_size</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="co">#&gt;     XXt &lt;- X %*% t(X)</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="co">#&gt;     logl_const &lt;- -(n_size - c_size) * d_size * log(2 * pi)/2 + </span></span>
+<span id="cb8-11"><a href="#cb8-11"></a><span class="co">#&gt;         d_size * log(det(XXt))/2</span></span>
+<span id="cb8-12"><a href="#cb8-12"></a><span class="co">#&gt;     out &lt;- list()</span></span>
+<span id="cb8-13"><a href="#cb8-13"></a><span class="co">#&gt;     for (t in 1:max_iter) {</span></span>
+<span id="cb8-14"><a href="#cb8-14"></a><span class="co">#&gt;         ep_out &lt;- eigen_proc(V_g, V_e)</span></span>
+<span id="cb8-15"><a href="#cb8-15"></a><span class="co">#&gt;         logdet_Ve &lt;- ep_out[[1]]</span></span>
+<span id="cb8-16"><a href="#cb8-16"></a><span class="co">#&gt;         UltVeh &lt;- ep_out[[2]]</span></span>
+<span id="cb8-17"><a href="#cb8-17"></a><span class="co">#&gt;         UltVehi &lt;- ep_out[[3]]</span></span>
+<span id="cb8-18"><a href="#cb8-18"></a><span class="co">#&gt;         D_l &lt;- ep_out[[4]]</span></span>
+<span id="cb8-19"><a href="#cb8-19"></a><span class="co">#&gt;         cq_out &lt;- calc_qi(eval, D_l, X)</span></span>
+<span id="cb8-20"><a href="#cb8-20"></a><span class="co">#&gt;         Qi &lt;- cq_out[[1]]</span></span>
+<span id="cb8-21"><a href="#cb8-21"></a><span class="co">#&gt;         lndetQ &lt;- cq_out[[2]]</span></span>
+<span id="cb8-22"><a href="#cb8-22"></a><span class="co">#&gt;         UltVehiY &lt;- UltVehi %*% Y</span></span>
+<span id="cb8-23"><a href="#cb8-23"></a><span class="co">#&gt;         xHiy &lt;- calc_XHiY(eval, D_l, X, UltVehiY)</span></span>
+<span id="cb8-24"><a href="#cb8-24"></a><span class="co">#&gt;         logl_new &lt;- logl_const + MphCalcLogL(eval = eval, xHiy = xHiy, </span></span>
+<span id="cb8-25"><a href="#cb8-25"></a><span class="co">#&gt;             D_l = D_l, UltVehiY = UltVehiY, Qi = Qi) - 0.5 * </span></span>
+<span id="cb8-26"><a href="#cb8-26"></a><span class="co">#&gt;             n_size * logdet_Ve</span></span>
+<span id="cb8-27"><a href="#cb8-27"></a><span class="co">#&gt;         logl_new &lt;- logl_new - 0.5 * (lndetQ - c_size * logdet_Ve)</span></span>
+<span id="cb8-28"><a href="#cb8-28"></a><span class="co">#&gt;         if (t &gt; 1) {</span></span>
+<span id="cb8-29"><a href="#cb8-29"></a><span class="co">#&gt;             if (logl_new - logl_old &lt; max_prec) {</span></span>
+<span id="cb8-30"><a href="#cb8-30"></a><span class="co">#&gt;                 break</span></span>
+<span id="cb8-31"><a href="#cb8-31"></a><span class="co">#&gt;             }</span></span>
+<span id="cb8-32"><a href="#cb8-32"></a><span class="co">#&gt;         }</span></span>
+<span id="cb8-33"><a href="#cb8-33"></a><span class="co">#&gt;         logl_old &lt;- logl_new</span></span>
+<span id="cb8-34"><a href="#cb8-34"></a><span class="co">#&gt;         co_out &lt;- calc_omega(eval, D_l)</span></span>
+<span id="cb8-35"><a href="#cb8-35"></a><span class="co">#&gt;         OmegaU &lt;- co_out[[1]]</span></span>
+<span id="cb8-36"><a href="#cb8-36"></a><span class="co">#&gt;         OmegaE &lt;- co_out[[2]]</span></span>
+<span id="cb8-37"><a href="#cb8-37"></a><span class="co">#&gt;         UltVehiB &lt;- UpdateRL_B(xHiy, Qi, d_size = nrow(Y))</span></span>
+<span id="cb8-38"><a href="#cb8-38"></a><span class="co">#&gt;         UltVehiBX &lt;- UltVehiB %*% X</span></span>
+<span id="cb8-39"><a href="#cb8-39"></a><span class="co">#&gt;         UltVehiU &lt;- update_u(OmegaE, UltVehiY, UltVehiBX)</span></span>
+<span id="cb8-40"><a href="#cb8-40"></a><span class="co">#&gt;         UltVehiE &lt;- update_e(UltVehiY, UltVehiBX, UltVehiU)</span></span>
+<span id="cb8-41"><a href="#cb8-41"></a><span class="co">#&gt;         U_hat &lt;- t(UltVeh) %*% UltVehiU</span></span>
+<span id="cb8-42"><a href="#cb8-42"></a><span class="co">#&gt;         E_hat &lt;- t(UltVeh) %*% UltVehiE</span></span>
+<span id="cb8-43"><a href="#cb8-43"></a><span class="co">#&gt;         B &lt;- t(UltVeh) %*% UltVehiB</span></span>
+<span id="cb8-44"><a href="#cb8-44"></a><span class="co">#&gt;         cs_out &lt;- calc_sigma(eval = eval, D_l = D_l, X = X, OmegaU = OmegaU, </span></span>
+<span id="cb8-45"><a href="#cb8-45"></a><span class="co">#&gt;             OmegaE = OmegaE, UltVeh = UltVeh, Qi = Qi)</span></span>
+<span id="cb8-46"><a href="#cb8-46"></a><span class="co">#&gt;         Sigma_ee &lt;- cs_out[[1]]</span></span>
+<span id="cb8-47"><a href="#cb8-47"></a><span class="co">#&gt;         Sigma_uu &lt;- cs_out[[2]]</span></span>
+<span id="cb8-48"><a href="#cb8-48"></a><span class="co">#&gt;         uv_out &lt;- update_v(eval, U_hat, E_hat, Sigma_uu, Sigma_ee)</span></span>
+<span id="cb8-49"><a href="#cb8-49"></a><span class="co">#&gt;         V_g &lt;- uv_out[[1]]</span></span>
+<span id="cb8-50"><a href="#cb8-50"></a><span class="co">#&gt;         V_e &lt;- uv_out[[2]]</span></span>
+<span id="cb8-51"><a href="#cb8-51"></a><span class="co">#&gt;         if (verbose_output) {</span></span>
+<span id="cb8-52"><a href="#cb8-52"></a><span class="co">#&gt;             out[[t]] &lt;- list(logl_new = logl_new, Vg = V_g, Ve = V_e, </span></span>
+<span id="cb8-53"><a href="#cb8-53"></a><span class="co">#&gt;                 Sigma_uu = Sigma_uu, Sigma_ee = Sigma_ee, B = B, </span></span>
+<span id="cb8-54"><a href="#cb8-54"></a><span class="co">#&gt;                 U_hat = U_hat, E_hat = E_hat, OmegaU = OmegaU, </span></span>
+<span id="cb8-55"><a href="#cb8-55"></a><span class="co">#&gt;                 OmegaE = OmegaE, logdet_Ve = logdet_Ve, UltVeh = UltVeh, </span></span>
+<span id="cb8-56"><a href="#cb8-56"></a><span class="co">#&gt;                 UltVehi = UltVehi, Dl = D_l, xHiy = xHiy, logl_const = logl_const, </span></span>
+<span id="cb8-57"><a href="#cb8-57"></a><span class="co">#&gt;                 UltVehiU = UltVehiU)</span></span>
+<span id="cb8-58"><a href="#cb8-58"></a><span class="co">#&gt;         }</span></span>
+<span id="cb8-59"><a href="#cb8-59"></a><span class="co">#&gt;         else {</span></span>
+<span id="cb8-60"><a href="#cb8-60"></a><span class="co">#&gt;             out[[1]] &lt;- list(logl_new = logl_new, Vg = V_g, Ve = V_e, </span></span>
+<span id="cb8-61"><a href="#cb8-61"></a><span class="co">#&gt;                 Sigma_uu = Sigma_uu, Sigma_ee = Sigma_ee, B = B, </span></span>
+<span id="cb8-62"><a href="#cb8-62"></a><span class="co">#&gt;                 U_hat = U_hat, E_hat = E_hat, OmegaU = OmegaU, </span></span>
+<span id="cb8-63"><a href="#cb8-63"></a><span class="co">#&gt;                 OmegaE = OmegaE, logdet_Ve = logdet_Ve, UltVeh = UltVeh, </span></span>
+<span id="cb8-64"><a href="#cb8-64"></a><span class="co">#&gt;                 UltVehi = UltVehi, Dl = D_l, xHiy = xHiy, logl_const = logl_const, </span></span>
+<span id="cb8-65"><a href="#cb8-65"></a><span class="co">#&gt;                 UltVehiU = UltVehiU)</span></span>
+<span id="cb8-66"><a href="#cb8-66"></a><span class="co">#&gt;         }</span></span>
+<span id="cb8-67"><a href="#cb8-67"></a><span class="co">#&gt;     }</span></span>
+<span id="cb8-68"><a href="#cb8-68"></a><span class="co">#&gt;     if (length(out) == max_iter) {</span></span>
+<span id="cb8-69"><a href="#cb8-69"></a><span class="co">#&gt;         warning(&quot;EM algorithm didn&#39;t converge.&quot;)</span></span>
+<span id="cb8-70"><a href="#cb8-70"></a><span class="co">#&gt;     }</span></span>
+<span id="cb8-71"><a href="#cb8-71"></a><span class="co">#&gt;     return(out)</span></span>
+<span id="cb8-72"><a href="#cb8-72"></a><span class="co">#&gt; }</span></span>
+<span id="cb8-73"><a href="#cb8-73"></a><span class="co">#&gt; &lt;bytecode: 0x55b48f936ff0&gt;</span></span>
+<span id="cb8-74"><a href="#cb8-74"></a><span class="co">#&gt; &lt;environment: namespace:gemma2&gt;</span></span></code></pre></div>
 <p>We see that the first component is the log-likelihood.</p>
 <p>We can verify that the log-likelihood uniformly increases (over EM iterations) with the following code:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">sapply</span>(<span class="dt">FUN =</span> <span class="cf">function</span>(x)x[[<span class="dv">1</span>]], <span class="dt">X =</span> foo) -&gt;<span class="st"> </span>loglik</a>
-<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">plot</span>(loglik)</a></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">sapply</span>(<span class="dt">FUN =</span> <span class="cf">function</span>(x)x[[<span class="dv">1</span>]], <span class="dt">X =</span> foo) -&gt;<span class="st"> </span>loglik</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="kw">plot</span>(loglik)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 <div id="direct-comparison-of-gemma-results-with-those-of-gemma2" class="section level2">
 <h2>Direct comparison of GEMMA results with those of <code>gemma2</code></h2>
@@ -490,115 +568,115 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <blockquote>
 <p>when we give <code>gemma2::MphEM()</code> the same starting values and same data, do we see that the first update of <span class="math inline">\(V_g\)</span> coincides with that from GEMMA (above)?</p>
 </blockquote>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">e_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(<span class="kw">as.matrix</span>(kinship))</a>
-<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="kw">center_kinship</span>(<span class="kw">as.matrix</span>(kinship)) -&gt;<span class="st"> </span>kinship_centered</a>
-<a class="sourceLine" id="cb10-3" data-line-number="3">ec_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(kinship_centered)</a></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="co">## first two</span></a>
-<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">      <span class="dt">X =</span> <span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">      ) -&gt;<span class="st"> </span>bar00</a>
-<a class="sourceLine" id="cb11-8" data-line-number="8"><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb11-9" data-line-number="9">      <span class="dt">X =</span> <span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-10" data-line-number="10">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-11" data-line-number="11">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb11-12" data-line-number="12">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb11-13" data-line-number="13">      ) -&gt;<span class="st"> </span>bar10</a>
-<a class="sourceLine" id="cb11-14" data-line-number="14"><span class="co">## second two</span></a>
-<a class="sourceLine" id="cb11-15" data-line-number="15"><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb11-16" data-line-number="16">      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-17" data-line-number="17">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-18" data-line-number="18">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb11-19" data-line-number="19">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb11-20" data-line-number="20">      ) -&gt;<span class="st"> </span>bar01</a>
-<a class="sourceLine" id="cb11-21" data-line-number="21"></a>
-<a class="sourceLine" id="cb11-22" data-line-number="22"><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb11-23" data-line-number="23">      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-24" data-line-number="24">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb11-25" data-line-number="25">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb11-26" data-line-number="26">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb11-27" data-line-number="27">      ) -&gt;<span class="st"> </span>bar11</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>e_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(<span class="kw">as.matrix</span>(kinship))</span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="kw">center_kinship</span>(<span class="kw">as.matrix</span>(kinship)) -&gt;<span class="st"> </span>kinship_centered</span>
+<span id="cb10-3"><a href="#cb10-3"></a>ec_out &lt;-<span class="st"> </span><span class="kw">eigen2</span>(kinship_centered)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co">## first two</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </span>
+<span id="cb11-3"><a href="#cb11-3"></a>      <span class="dt">X =</span> <span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb11-4"><a href="#cb11-4"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb11-5"><a href="#cb11-5"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb11-6"><a href="#cb11-6"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb11-7"><a href="#cb11-7"></a>      ) -&gt;<span class="st"> </span>bar00</span>
+<span id="cb11-8"><a href="#cb11-8"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </span>
+<span id="cb11-9"><a href="#cb11-9"></a>      <span class="dt">X =</span> <span class="kw">t</span>(g1m) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb11-10"><a href="#cb11-10"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb11-11"><a href="#cb11-11"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb11-12"><a href="#cb11-12"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb11-13"><a href="#cb11-13"></a>      ) -&gt;<span class="st"> </span>bar10</span>
+<span id="cb11-14"><a href="#cb11-14"></a><span class="co">## second two</span></span>
+<span id="cb11-15"><a href="#cb11-15"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </span>
+<span id="cb11-16"><a href="#cb11-16"></a>      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb11-17"><a href="#cb11-17"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb11-18"><a href="#cb11-18"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb11-19"><a href="#cb11-19"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb11-20"><a href="#cb11-20"></a>      ) -&gt;<span class="st"> </span>bar01</span>
+<span id="cb11-21"><a href="#cb11-21"></a></span>
+<span id="cb11-22"><a href="#cb11-22"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </span>
+<span id="cb11-23"><a href="#cb11-23"></a>      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb11-24"><a href="#cb11-24"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb11-25"><a href="#cb11-25"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">1.91352</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.530827</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb11-26"><a href="#cb11-26"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.320028</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.561589</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb11-27"><a href="#cb11-27"></a>      ) -&gt;<span class="st"> </span>bar11</span></code></pre></div>
 <p>We see that the centering of the kinship matrix doesn’t change the results here. Look also at the convergence points:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">bar00[[<span class="kw">length</span>(bar00)]][[<span class="dv">2</span>]]</a>
-<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="co">#&gt;            [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="co">#&gt; [1,]  2.8112632 -0.4202874</span></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4"><span class="co">#&gt; [2,] -0.4202874  0.5839737</span></a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">bar01[[<span class="kw">length</span>(bar01)]][[<span class="dv">2</span>]]</a>
-<a class="sourceLine" id="cb12-6" data-line-number="6"><span class="co">#&gt;            [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb12-7" data-line-number="7"><span class="co">#&gt; [1,]  2.6853565 -0.3978194</span></a>
-<a class="sourceLine" id="cb12-8" data-line-number="8"><span class="co">#&gt; [2,] -0.3978194  0.7337082</span></a>
-<a class="sourceLine" id="cb12-9" data-line-number="9">bar10[[<span class="kw">length</span>(bar10)]][[<span class="dv">2</span>]]</a>
-<a class="sourceLine" id="cb12-10" data-line-number="10"><span class="co">#&gt;            [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb12-11" data-line-number="11"><span class="co">#&gt; [1,]  2.8112632 -0.4202874</span></a>
-<a class="sourceLine" id="cb12-12" data-line-number="12"><span class="co">#&gt; [2,] -0.4202874  0.5839737</span></a>
-<a class="sourceLine" id="cb12-13" data-line-number="13">bar11[[<span class="kw">length</span>(bar11)]][[<span class="dv">2</span>]]</a>
-<a class="sourceLine" id="cb12-14" data-line-number="14"><span class="co">#&gt;            [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb12-15" data-line-number="15"><span class="co">#&gt; [1,]  2.6853565 -0.3978194</span></a>
-<a class="sourceLine" id="cb12-16" data-line-number="16"><span class="co">#&gt; [2,] -0.3978194  0.7337082</span></a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>bar00[[<span class="kw">length</span>(bar00)]][[<span class="dv">2</span>]]</span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span id="cb12-3"><a href="#cb12-3"></a><span class="co">#&gt; [1,]  2.8112632 -0.4202874</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a><span class="co">#&gt; [2,] -0.4202874  0.5839737</span></span>
+<span id="cb12-5"><a href="#cb12-5"></a>bar01[[<span class="kw">length</span>(bar01)]][[<span class="dv">2</span>]]</span>
+<span id="cb12-6"><a href="#cb12-6"></a><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span id="cb12-7"><a href="#cb12-7"></a><span class="co">#&gt; [1,]  2.6853565 -0.3978194</span></span>
+<span id="cb12-8"><a href="#cb12-8"></a><span class="co">#&gt; [2,] -0.3978194  0.7337082</span></span>
+<span id="cb12-9"><a href="#cb12-9"></a>bar10[[<span class="kw">length</span>(bar10)]][[<span class="dv">2</span>]]</span>
+<span id="cb12-10"><a href="#cb12-10"></a><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span id="cb12-11"><a href="#cb12-11"></a><span class="co">#&gt; [1,]  2.8112632 -0.4202874</span></span>
+<span id="cb12-12"><a href="#cb12-12"></a><span class="co">#&gt; [2,] -0.4202874  0.5839737</span></span>
+<span id="cb12-13"><a href="#cb12-13"></a>bar11[[<span class="kw">length</span>(bar11)]][[<span class="dv">2</span>]]</span>
+<span id="cb12-14"><a href="#cb12-14"></a><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span id="cb12-15"><a href="#cb12-15"></a><span class="co">#&gt; [1,]  2.6853565 -0.3978194</span></span>
+<span id="cb12-16"><a href="#cb12-16"></a><span class="co">#&gt; [2,] -0.3978194  0.7337082</span></span></code></pre></div>
 <p>I see now that the X, as inputted to MphEM is printed 3 times in each of my output files. I’m not sure why this is.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors</a>
-<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="co">#&gt;       [,1]         [,2]         [,3]         [,4]          [,5]</span></a>
-<a class="sourceLine" id="cb13-3" data-line-number="3"><span class="co">#&gt; [1,] -10.0 8.209571e-10 3.423880e-10 8.799904e-10  3.741043e-10</span></a>
-<a class="sourceLine" id="cb13-4" data-line-number="4"><span class="co">#&gt; [2,]  -8.2 5.214029e-01 1.593502e-01 2.047141e-01 -2.119088e-01</span></a>
-<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="co">#&gt;              [,6]          [,7]          [,8]         [,9]         [,10]</span></a>
-<a class="sourceLine" id="cb13-6" data-line-number="6"><span class="co">#&gt; [1,] 5.193286e-10 -9.694780e-10 -3.196897e-10 6.163396e-10  5.822616e-10</span></a>
-<a class="sourceLine" id="cb13-7" data-line-number="7"><span class="co">#&gt; [2,] 1.434733e-01 -2.042852e-01 -1.109870e-01 6.902534e-02 -2.025183e-01</span></a>
-<a class="sourceLine" id="cb13-8" data-line-number="8"><span class="co">#&gt;              [,11]         [,12]         [,13]         [,14]         [,15]</span></a>
-<a class="sourceLine" id="cb13-9" data-line-number="9"><span class="co">#&gt; [1,]  3.875483e-10 -5.354989e-10  4.053215e-10 -1.139380e-09 -1.024021e-09</span></a>
-<a class="sourceLine" id="cb13-10" data-line-number="10"><span class="co">#&gt; [2,] -1.264110e-01  3.671612e-01 -3.176738e-01 -2.499061e-01 -4.861219e-01</span></a>
-<a class="sourceLine" id="cb13-11" data-line-number="11"><span class="co">#&gt;              [,16]         [,17]        [,18]         [,19]         [,20]</span></a>
-<a class="sourceLine" id="cb13-12" data-line-number="12"><span class="co">#&gt; [1,] -2.905492e-10 -4.402925e-10 3.027143e-10  4.031493e-10 -2.617206e-10</span></a>
-<a class="sourceLine" id="cb13-13" data-line-number="13"><span class="co">#&gt; [2,]  5.697363e-02  1.413093e-01 4.235653e-01 -9.595364e-02  2.091495e-01</span></a>
-<a class="sourceLine" id="cb13-14" data-line-number="14"><span class="co">#&gt;             [,21]         [,22]         [,23]         [,24]         [,25]</span></a>
-<a class="sourceLine" id="cb13-15" data-line-number="15"><span class="co">#&gt; [1,] 9.958686e-10 -4.930074e-10 -1.710612e-10 -3.388599e-10 -7.418881e-10</span></a>
-<a class="sourceLine" id="cb13-16" data-line-number="16"><span class="co">#&gt; [2,] 5.928482e-02  5.366786e-01 -2.983362e-01 -3.451517e-01  2.110054e-01</span></a>
-<a class="sourceLine" id="cb13-17" data-line-number="17"><span class="co">#&gt;             [,26]         [,27]         [,28]        [,29]         [,30]</span></a>
-<a class="sourceLine" id="cb13-18" data-line-number="18"><span class="co">#&gt; [1,] 5.581811e-10 -9.200053e-10 -9.621139e-11 4.626981e-10 -6.783181e-10</span></a>
-<a class="sourceLine" id="cb13-19" data-line-number="19"><span class="co">#&gt; [2,] 1.807756e-01  2.627168e-01  1.685653e-01 7.195078e-01  4.955564e-02</span></a>
-<a class="sourceLine" id="cb13-20" data-line-number="20"><span class="co">#&gt;             [,31]         [,32]         [,33]         [,34]         [,35]</span></a>
-<a class="sourceLine" id="cb13-21" data-line-number="21"><span class="co">#&gt; [1,] 6.249647e-11 -2.818461e-10  4.676824e-10  2.764171e-10  1.328437e-10</span></a>
-<a class="sourceLine" id="cb13-22" data-line-number="22"><span class="co">#&gt; [2,] 1.142125e-01 -9.182112e-01 -1.214265e+00 -1.380134e-01 -5.150178e-01</span></a>
-<a class="sourceLine" id="cb13-23" data-line-number="23"><span class="co">#&gt;              [,36]        [,37]         [,38]         [,39]        [,40]</span></a>
-<a class="sourceLine" id="cb13-24" data-line-number="24"><span class="co">#&gt; [1,]  5.698039e-10 8.583911e-11 -2.430915e-10 -5.453552e-10 1.853685e-10</span></a>
-<a class="sourceLine" id="cb13-25" data-line-number="25"><span class="co">#&gt; [2,] -5.743965e-01 3.627758e-01  1.455956e-01 -3.543663e-01 4.206109e-01</span></a>
-<a class="sourceLine" id="cb13-26" data-line-number="26"><span class="co">#&gt;              [,41]        [,42]        [,43]        [,44]        [,45]</span></a>
-<a class="sourceLine" id="cb13-27" data-line-number="27"><span class="co">#&gt; [1,]  2.150999e-10 2.055196e-10 3.165112e-10 4.230766e-11 2.304351e-10</span></a>
-<a class="sourceLine" id="cb13-28" data-line-number="28"><span class="co">#&gt; [2,] -1.125620e+00 4.366374e-03 4.839497e-01 5.627990e-01 1.881103e-02</span></a>
-<a class="sourceLine" id="cb13-29" data-line-number="29"><span class="co">#&gt;              [,46]         [,47]        [,48]         [,49]         [,50]</span></a>
-<a class="sourceLine" id="cb13-30" data-line-number="30"><span class="co">#&gt; [1,] -6.131784e-11  1.198367e-10 4.710556e-10  5.443409e-10  2.393824e-10</span></a>
-<a class="sourceLine" id="cb13-31" data-line-number="31"><span class="co">#&gt; [2,]  1.534764e-03 -9.599920e-02 2.913756e-01 -1.670098e-01 -3.429212e-01</span></a>
-<a class="sourceLine" id="cb13-32" data-line-number="32"><span class="co">#&gt;              [,51]        [,52]         [,53]         [,54]         [,55]</span></a>
-<a class="sourceLine" id="cb13-33" data-line-number="33"><span class="co">#&gt; [1,] -8.476331e-12 1.665049e-10 -2.681996e-11 -2.718945e-10 -3.359916e-10</span></a>
-<a class="sourceLine" id="cb13-34" data-line-number="34"><span class="co">#&gt; [2,]  9.796257e-02 8.098477e-01 -1.309711e+00 -5.100377e-02 -4.045755e-01</span></a>
-<a class="sourceLine" id="cb13-35" data-line-number="35"><span class="co">#&gt;              [,56]         [,57]        [,58]         [,59]        [,60]</span></a>
-<a class="sourceLine" id="cb13-36" data-line-number="36"><span class="co">#&gt; [1,]  2.576899e-10 -2.166084e-11 2.015501e-10 -8.589462e-12 3.397737e-10</span></a>
-<a class="sourceLine" id="cb13-37" data-line-number="37"><span class="co">#&gt; [2,] -4.973091e-01  6.244735e-01 2.753963e-01  3.056504e-01 1.027420e+00</span></a>
-<a class="sourceLine" id="cb13-38" data-line-number="38"><span class="co">#&gt;             [,61]         [,62]         [,63]         [,64]         [,65]</span></a>
-<a class="sourceLine" id="cb13-39" data-line-number="39"><span class="co">#&gt; [1,] 1.629878e-10 -1.125520e-10 -9.604466e-11 -1.782041e-10  6.516876e-11</span></a>
-<a class="sourceLine" id="cb13-40" data-line-number="40"><span class="co">#&gt; [2,] 5.171210e-01 -9.679433e-01  9.252804e-01 -2.548765e-01 -6.264708e-01</span></a>
-<a class="sourceLine" id="cb13-41" data-line-number="41"><span class="co">#&gt;              [,66]         [,67]         [,68]        [,69]         [,70]</span></a>
-<a class="sourceLine" id="cb13-42" data-line-number="42"><span class="co">#&gt; [1,] -2.114665e-10 -4.046121e-10  1.220681e-10 1.596400e-10 -4.175104e-10</span></a>
-<a class="sourceLine" id="cb13-43" data-line-number="43"><span class="co">#&gt; [2,] -8.376359e-01 -6.859459e-01 -8.372176e-01 8.521224e-01  1.009573e-02</span></a>
-<a class="sourceLine" id="cb13-44" data-line-number="44"><span class="co">#&gt;              [,71]         [,72]         [,73]         [,74]        [,75]</span></a>
-<a class="sourceLine" id="cb13-45" data-line-number="45"><span class="co">#&gt; [1,] -2.283430e-10 -3.944047e-10 -1.824441e-10 -2.485945e-10 2.511755e-11</span></a>
-<a class="sourceLine" id="cb13-46" data-line-number="46"><span class="co">#&gt; [2,]  2.286194e-01 -1.347910e+00  5.240299e-01  5.949179e-01 4.958164e-01</span></a>
-<a class="sourceLine" id="cb13-47" data-line-number="47"><span class="co">#&gt;              [,76]         [,77]        [,78]        [,79]         [,80]</span></a>
-<a class="sourceLine" id="cb13-48" data-line-number="48"><span class="co">#&gt; [1,] -2.587797e-11  1.795558e-10 4.519914e-12 2.866099e-11 -2.266703e-10</span></a>
-<a class="sourceLine" id="cb13-49" data-line-number="49"><span class="co">#&gt; [2,]  1.359179e+00 -1.211559e-01 6.212741e-01 7.158448e-01 -9.853067e-01</span></a>
-<a class="sourceLine" id="cb13-50" data-line-number="50"><span class="co">#&gt;              [,81]         [,82]         [,83]         [,84]         [,85]</span></a>
-<a class="sourceLine" id="cb13-51" data-line-number="51"><span class="co">#&gt; [1,] -9.518052e-11 -7.734569e-11 -4.454652e-11 -5.285478e-11 -1.012893e-10</span></a>
-<a class="sourceLine" id="cb13-52" data-line-number="52"><span class="co">#&gt; [2,]  1.570249e-01  7.387338e-01  1.681314e-02 -1.937415e+00  1.512452e-01</span></a>
-<a class="sourceLine" id="cb13-53" data-line-number="53"><span class="co">#&gt;             [,86]         [,87]         [,88]         [,89]        [,90]</span></a>
-<a class="sourceLine" id="cb13-54" data-line-number="54"><span class="co">#&gt; [1,] 3.718089e-11 -1.109072e-10  1.729715e-10 -4.520380e-11 2.238981e-10</span></a>
-<a class="sourceLine" id="cb13-55" data-line-number="55"><span class="co">#&gt; [2,] 8.376756e-01  8.955207e-01 -1.930832e+00 -8.796979e-01 2.219885e-01</span></a>
-<a class="sourceLine" id="cb13-56" data-line-number="56"><span class="co">#&gt;              [,91]        [,92]         [,93]        [,94]         [,95]</span></a>
-<a class="sourceLine" id="cb13-57" data-line-number="57"><span class="co">#&gt; [1,] -3.103531e-12 1.040781e-10 -7.791080e-11 2.907737e-11  1.831045e-11</span></a>
-<a class="sourceLine" id="cb13-58" data-line-number="58"><span class="co">#&gt; [2,]  5.667558e-01 1.251593e-01 -9.984738e-01 6.009364e-02 -1.296282e-01</span></a>
-<a class="sourceLine" id="cb13-59" data-line-number="59"><span class="co">#&gt;              [,96]         [,97]         [,98]         [,99]        [,100]</span></a>
-<a class="sourceLine" id="cb13-60" data-line-number="60"><span class="co">#&gt; [1,] -7.721866e-11 -8.969529e-11 -2.186182e-11 -3.175127e-11  2.421263e-11</span></a>
-<a class="sourceLine" id="cb13-61" data-line-number="61"><span class="co">#&gt; [2,] -1.681463e+00  2.364884e-01  3.328094e-01 -5.143277e-01 -1.334516e+00</span></a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors</span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="co">#&gt;       [,1]         [,2]         [,3]         [,4]          [,5]         [,6]</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a><span class="co">#&gt; [1,] -10.0 8.209571e-10 3.423880e-10 8.799904e-10  3.741043e-10 5.193286e-10</span></span>
+<span id="cb13-4"><a href="#cb13-4"></a><span class="co">#&gt; [2,]  -8.2 5.214029e-01 1.593502e-01 2.047141e-01 -2.119088e-01 1.434733e-01</span></span>
+<span id="cb13-5"><a href="#cb13-5"></a><span class="co">#&gt;               [,7]          [,8]         [,9]         [,10]         [,11]</span></span>
+<span id="cb13-6"><a href="#cb13-6"></a><span class="co">#&gt; [1,] -9.694780e-10 -3.196897e-10 6.163396e-10  5.822616e-10  3.875483e-10</span></span>
+<span id="cb13-7"><a href="#cb13-7"></a><span class="co">#&gt; [2,] -2.042852e-01 -1.109870e-01 6.902534e-02 -2.025183e-01 -1.264110e-01</span></span>
+<span id="cb13-8"><a href="#cb13-8"></a><span class="co">#&gt;              [,12]         [,13]         [,14]         [,15]         [,16]</span></span>
+<span id="cb13-9"><a href="#cb13-9"></a><span class="co">#&gt; [1,] -5.354989e-10  4.053215e-10 -1.139380e-09 -1.024021e-09 -2.905492e-10</span></span>
+<span id="cb13-10"><a href="#cb13-10"></a><span class="co">#&gt; [2,]  3.671612e-01 -3.176738e-01 -2.499061e-01 -4.861219e-01  5.697363e-02</span></span>
+<span id="cb13-11"><a href="#cb13-11"></a><span class="co">#&gt;              [,17]        [,18]         [,19]         [,20]        [,21]</span></span>
+<span id="cb13-12"><a href="#cb13-12"></a><span class="co">#&gt; [1,] -4.402925e-10 3.027143e-10  4.031493e-10 -2.617206e-10 9.958686e-10</span></span>
+<span id="cb13-13"><a href="#cb13-13"></a><span class="co">#&gt; [2,]  1.413093e-01 4.235653e-01 -9.595364e-02  2.091495e-01 5.928482e-02</span></span>
+<span id="cb13-14"><a href="#cb13-14"></a><span class="co">#&gt;              [,22]         [,23]         [,24]         [,25]        [,26]</span></span>
+<span id="cb13-15"><a href="#cb13-15"></a><span class="co">#&gt; [1,] -4.930074e-10 -1.710612e-10 -3.388599e-10 -7.418881e-10 5.581811e-10</span></span>
+<span id="cb13-16"><a href="#cb13-16"></a><span class="co">#&gt; [2,]  5.366786e-01 -2.983362e-01 -3.451517e-01  2.110054e-01 1.807756e-01</span></span>
+<span id="cb13-17"><a href="#cb13-17"></a><span class="co">#&gt;              [,27]         [,28]        [,29]         [,30]        [,31]</span></span>
+<span id="cb13-18"><a href="#cb13-18"></a><span class="co">#&gt; [1,] -9.200053e-10 -9.621139e-11 4.626981e-10 -6.783181e-10 6.249647e-11</span></span>
+<span id="cb13-19"><a href="#cb13-19"></a><span class="co">#&gt; [2,]  2.627168e-01  1.685653e-01 7.195078e-01  4.955564e-02 1.142125e-01</span></span>
+<span id="cb13-20"><a href="#cb13-20"></a><span class="co">#&gt;              [,32]         [,33]         [,34]         [,35]         [,36]</span></span>
+<span id="cb13-21"><a href="#cb13-21"></a><span class="co">#&gt; [1,] -2.818461e-10  4.676824e-10  2.764171e-10  1.328437e-10  5.698039e-10</span></span>
+<span id="cb13-22"><a href="#cb13-22"></a><span class="co">#&gt; [2,] -9.182112e-01 -1.214265e+00 -1.380134e-01 -5.150178e-01 -5.743965e-01</span></span>
+<span id="cb13-23"><a href="#cb13-23"></a><span class="co">#&gt;             [,37]         [,38]         [,39]        [,40]         [,41]</span></span>
+<span id="cb13-24"><a href="#cb13-24"></a><span class="co">#&gt; [1,] 8.583911e-11 -2.430915e-10 -5.453552e-10 1.853685e-10  2.150999e-10</span></span>
+<span id="cb13-25"><a href="#cb13-25"></a><span class="co">#&gt; [2,] 3.627758e-01  1.455956e-01 -3.543663e-01 4.206109e-01 -1.125620e+00</span></span>
+<span id="cb13-26"><a href="#cb13-26"></a><span class="co">#&gt;             [,42]        [,43]        [,44]        [,45]         [,46]</span></span>
+<span id="cb13-27"><a href="#cb13-27"></a><span class="co">#&gt; [1,] 2.055196e-10 3.165112e-10 4.230766e-11 2.304351e-10 -6.131784e-11</span></span>
+<span id="cb13-28"><a href="#cb13-28"></a><span class="co">#&gt; [2,] 4.366374e-03 4.839497e-01 5.627990e-01 1.881103e-02  1.534764e-03</span></span>
+<span id="cb13-29"><a href="#cb13-29"></a><span class="co">#&gt;              [,47]        [,48]         [,49]         [,50]         [,51]</span></span>
+<span id="cb13-30"><a href="#cb13-30"></a><span class="co">#&gt; [1,]  1.198367e-10 4.710556e-10  5.443409e-10  2.393824e-10 -8.476331e-12</span></span>
+<span id="cb13-31"><a href="#cb13-31"></a><span class="co">#&gt; [2,] -9.599920e-02 2.913756e-01 -1.670098e-01 -3.429212e-01  9.796257e-02</span></span>
+<span id="cb13-32"><a href="#cb13-32"></a><span class="co">#&gt;             [,52]         [,53]         [,54]         [,55]         [,56]</span></span>
+<span id="cb13-33"><a href="#cb13-33"></a><span class="co">#&gt; [1,] 1.665049e-10 -2.681996e-11 -2.718945e-10 -3.359916e-10  2.576899e-10</span></span>
+<span id="cb13-34"><a href="#cb13-34"></a><span class="co">#&gt; [2,] 8.098477e-01 -1.309711e+00 -5.100377e-02 -4.045755e-01 -4.973091e-01</span></span>
+<span id="cb13-35"><a href="#cb13-35"></a><span class="co">#&gt;              [,57]        [,58]         [,59]        [,60]        [,61]</span></span>
+<span id="cb13-36"><a href="#cb13-36"></a><span class="co">#&gt; [1,] -2.166084e-11 2.015501e-10 -8.589462e-12 3.397737e-10 1.629878e-10</span></span>
+<span id="cb13-37"><a href="#cb13-37"></a><span class="co">#&gt; [2,]  6.244735e-01 2.753963e-01  3.056504e-01 1.027420e+00 5.171210e-01</span></span>
+<span id="cb13-38"><a href="#cb13-38"></a><span class="co">#&gt;              [,62]         [,63]         [,64]         [,65]         [,66]</span></span>
+<span id="cb13-39"><a href="#cb13-39"></a><span class="co">#&gt; [1,] -1.125520e-10 -9.604466e-11 -1.782041e-10  6.516876e-11 -2.114665e-10</span></span>
+<span id="cb13-40"><a href="#cb13-40"></a><span class="co">#&gt; [2,] -9.679433e-01  9.252804e-01 -2.548765e-01 -6.264708e-01 -8.376359e-01</span></span>
+<span id="cb13-41"><a href="#cb13-41"></a><span class="co">#&gt;              [,67]         [,68]        [,69]         [,70]         [,71]</span></span>
+<span id="cb13-42"><a href="#cb13-42"></a><span class="co">#&gt; [1,] -4.046121e-10  1.220681e-10 1.596400e-10 -4.175104e-10 -2.283430e-10</span></span>
+<span id="cb13-43"><a href="#cb13-43"></a><span class="co">#&gt; [2,] -6.859459e-01 -8.372176e-01 8.521224e-01  1.009573e-02  2.286194e-01</span></span>
+<span id="cb13-44"><a href="#cb13-44"></a><span class="co">#&gt;              [,72]         [,73]         [,74]        [,75]         [,76]</span></span>
+<span id="cb13-45"><a href="#cb13-45"></a><span class="co">#&gt; [1,] -3.944047e-10 -1.824441e-10 -2.485945e-10 2.511755e-11 -2.587797e-11</span></span>
+<span id="cb13-46"><a href="#cb13-46"></a><span class="co">#&gt; [2,] -1.347910e+00  5.240299e-01  5.949179e-01 4.958164e-01  1.359179e+00</span></span>
+<span id="cb13-47"><a href="#cb13-47"></a><span class="co">#&gt;              [,77]        [,78]        [,79]         [,80]         [,81]</span></span>
+<span id="cb13-48"><a href="#cb13-48"></a><span class="co">#&gt; [1,]  1.795558e-10 4.519914e-12 2.866099e-11 -2.266703e-10 -9.518052e-11</span></span>
+<span id="cb13-49"><a href="#cb13-49"></a><span class="co">#&gt; [2,] -1.211559e-01 6.212741e-01 7.158448e-01 -9.853067e-01  1.570249e-01</span></span>
+<span id="cb13-50"><a href="#cb13-50"></a><span class="co">#&gt;              [,82]         [,83]         [,84]         [,85]        [,86]</span></span>
+<span id="cb13-51"><a href="#cb13-51"></a><span class="co">#&gt; [1,] -7.734569e-11 -4.454652e-11 -5.285478e-11 -1.012893e-10 3.718089e-11</span></span>
+<span id="cb13-52"><a href="#cb13-52"></a><span class="co">#&gt; [2,]  7.387338e-01  1.681314e-02 -1.937415e+00  1.512452e-01 8.376756e-01</span></span>
+<span id="cb13-53"><a href="#cb13-53"></a><span class="co">#&gt;              [,87]         [,88]         [,89]        [,90]         [,91]</span></span>
+<span id="cb13-54"><a href="#cb13-54"></a><span class="co">#&gt; [1,] -1.109072e-10  1.729715e-10 -4.520380e-11 2.238981e-10 -3.103531e-12</span></span>
+<span id="cb13-55"><a href="#cb13-55"></a><span class="co">#&gt; [2,]  8.955207e-01 -1.930832e+00 -8.796979e-01 2.219885e-01  5.667558e-01</span></span>
+<span id="cb13-56"><a href="#cb13-56"></a><span class="co">#&gt;             [,92]         [,93]        [,94]         [,95]         [,96]</span></span>
+<span id="cb13-57"><a href="#cb13-57"></a><span class="co">#&gt; [1,] 1.040781e-10 -7.791080e-11 2.907737e-11  1.831045e-11 -7.721866e-11</span></span>
+<span id="cb13-58"><a href="#cb13-58"></a><span class="co">#&gt; [2,] 1.251593e-01 -9.984738e-01 6.009364e-02 -1.296282e-01 -1.681463e+00</span></span>
+<span id="cb13-59"><a href="#cb13-59"></a><span class="co">#&gt;              [,97]         [,98]         [,99]        [,100]</span></span>
+<span id="cb13-60"><a href="#cb13-60"></a><span class="co">#&gt; [1,] -8.969529e-11 -2.186182e-11 -3.175127e-11  2.421263e-11</span></span>
+<span id="cb13-61"><a href="#cb13-61"></a><span class="co">#&gt; [2,]  2.364884e-01  3.328094e-01 -5.143277e-01 -1.334516e+00</span></span></code></pre></div>
 <p>I see that the third instance of “X,” - in the file of GEMMA output - specifies that X has two rows, while the first two seem to say that X has only one row. Furthermore, it seems that the third instance of “X,” has the same entries that I get when calculating <code>X %*% U</code> - namely, the first column is -10 and -8.2, the remaining entries in the first row are near zero, and the remaining entries in the second row begin with 0.52.</p>
 <p>I see now that I misread the output file from GEMMA. Within it, there are actually 3 calls (ie, per SNP) to MphEM. It’s the third call that we want to reproduce.</p>
 <p>From the above output, we see that the initial values, for the third call to MphEM() are:</p>
@@ -626,46 +704,46 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 \end{array}
 \right)\]</span></p>
 <p>Can we get our <code>gemma2</code> R code to do this?</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb14-2" data-line-number="2">      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb14-4" data-line-number="4">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">2.73</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.39</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.39</span>, <span class="fl">0.74</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb14-5" data-line-number="5">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.15</span>, <span class="fl">0.27</span>, <span class="fl">0.27</span>, <span class="fl">0.50</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb14-6" data-line-number="6">      ) -&gt;<span class="st"> </span>out1</a>
-<a class="sourceLine" id="cb14-7" data-line-number="7">out1[[<span class="dv">1</span>]][<span class="kw">c</span>(<span class="dv">2</span><span class="op">:</span><span class="dv">3</span>)]</a>
-<a class="sourceLine" id="cb14-8" data-line-number="8"><span class="co">#&gt; $Vg</span></a>
-<a class="sourceLine" id="cb14-9" data-line-number="9"><span class="co">#&gt;           [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb14-10" data-line-number="10"><span class="co">#&gt; [1,]  2.706773 -0.4119620</span></a>
-<a class="sourceLine" id="cb14-11" data-line-number="11"><span class="co">#&gt; [2,] -0.411962  0.7428087</span></a>
-<a class="sourceLine" id="cb14-12" data-line-number="12"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb14-13" data-line-number="13"><span class="co">#&gt; $Ve</span></a>
-<a class="sourceLine" id="cb14-14" data-line-number="14"><span class="co">#&gt;           [,1]      [,2]</span></a>
-<a class="sourceLine" id="cb14-15" data-line-number="15"><span class="co">#&gt; [1,] 0.1531700 0.2761671</span></a>
-<a class="sourceLine" id="cb14-16" data-line-number="16"><span class="co">#&gt; [2,] 0.2761671 0.5119295</span></a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> e_out<span class="op">$</span>values, </span>
+<span id="cb14-2"><a href="#cb14-2"></a>      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb14-3"><a href="#cb14-3"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>e_out<span class="op">$</span>vectors, </span>
+<span id="cb14-4"><a href="#cb14-4"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">2.73</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.39</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.39</span>, <span class="fl">0.74</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb14-5"><a href="#cb14-5"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.15</span>, <span class="fl">0.27</span>, <span class="fl">0.27</span>, <span class="fl">0.50</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb14-6"><a href="#cb14-6"></a>      ) -&gt;<span class="st"> </span>out1</span>
+<span id="cb14-7"><a href="#cb14-7"></a>out1[[<span class="dv">1</span>]][<span class="kw">c</span>(<span class="dv">2</span><span class="op">:</span><span class="dv">3</span>)]</span>
+<span id="cb14-8"><a href="#cb14-8"></a><span class="co">#&gt; $Vg</span></span>
+<span id="cb14-9"><a href="#cb14-9"></a><span class="co">#&gt;           [,1]       [,2]</span></span>
+<span id="cb14-10"><a href="#cb14-10"></a><span class="co">#&gt; [1,]  2.706773 -0.4119620</span></span>
+<span id="cb14-11"><a href="#cb14-11"></a><span class="co">#&gt; [2,] -0.411962  0.7428087</span></span>
+<span id="cb14-12"><a href="#cb14-12"></a><span class="co">#&gt; </span></span>
+<span id="cb14-13"><a href="#cb14-13"></a><span class="co">#&gt; $Ve</span></span>
+<span id="cb14-14"><a href="#cb14-14"></a><span class="co">#&gt;           [,1]      [,2]</span></span>
+<span id="cb14-15"><a href="#cb14-15"></a><span class="co">#&gt; [1,] 0.1531700 0.2761671</span></span>
+<span id="cb14-16"><a href="#cb14-16"></a><span class="co">#&gt; [2,] 0.2761671 0.5119295</span></span></code></pre></div>
 <p>Now try with <code>ec_out</code></p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </a>
-<a class="sourceLine" id="cb15-2" data-line-number="2">      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb15-3" data-line-number="3">      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </a>
-<a class="sourceLine" id="cb15-4" data-line-number="4">      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">2.731324</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.394865</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.394865</span>, <span class="fl">0.737116</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </a>
-<a class="sourceLine" id="cb15-5" data-line-number="5">      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.147467</span>, <span class="fl">0.272090</span>, <span class="fl">0.272090</span>, <span class="fl">0.502031</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb15-6" data-line-number="6">      ) -&gt;<span class="st"> </span>out1</a>
-<a class="sourceLine" id="cb15-7" data-line-number="7">out1[[<span class="dv">1</span>]][<span class="kw">c</span>(<span class="dv">2</span><span class="op">:</span><span class="dv">3</span>)]</a>
-<a class="sourceLine" id="cb15-8" data-line-number="8"><span class="co">#&gt; $Vg</span></a>
-<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">#&gt;            [,1]       [,2]</span></a>
-<a class="sourceLine" id="cb15-10" data-line-number="10"><span class="co">#&gt; [1,]  2.7372540 -0.4041481</span></a>
-<a class="sourceLine" id="cb15-11" data-line-number="11"><span class="co">#&gt; [2,] -0.4041481  0.7434534</span></a>
-<a class="sourceLine" id="cb15-12" data-line-number="12"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb15-13" data-line-number="13"><span class="co">#&gt; $Ve</span></a>
-<a class="sourceLine" id="cb15-14" data-line-number="14"><span class="co">#&gt;           [,1]      [,2]</span></a>
-<a class="sourceLine" id="cb15-15" data-line-number="15"><span class="co">#&gt; [1,] 0.1495667 0.2759642</span></a>
-<a class="sourceLine" id="cb15-16" data-line-number="16"><span class="co">#&gt; [2,] 0.2759642 0.5091793</span></a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw">MphEM</span>(<span class="dt">eval =</span> ec_out<span class="op">$</span>values, </span>
+<span id="cb15-2"><a href="#cb15-2"></a>      <span class="dt">X =</span> <span class="kw">t</span>(<span class="kw">cbind</span>(<span class="dv">1</span>, g1m)) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb15-3"><a href="#cb15-3"></a>      <span class="dt">Y =</span> <span class="kw">t</span>(phe16) <span class="op">%*%</span><span class="st"> </span>ec_out<span class="op">$</span>vectors, </span>
+<span id="cb15-4"><a href="#cb15-4"></a>      <span class="dt">V_g =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">2.731324</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.394865</span>, <span class="op">-</span><span class="st"> </span><span class="fl">0.394865</span>, <span class="fl">0.737116</span>), <span class="dt">nrow =</span> <span class="dv">2</span>), </span>
+<span id="cb15-5"><a href="#cb15-5"></a>      <span class="dt">V_e =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="fl">0.147467</span>, <span class="fl">0.272090</span>, <span class="fl">0.272090</span>, <span class="fl">0.502031</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb15-6"><a href="#cb15-6"></a>      ) -&gt;<span class="st"> </span>out1</span>
+<span id="cb15-7"><a href="#cb15-7"></a>out1[[<span class="dv">1</span>]][<span class="kw">c</span>(<span class="dv">2</span><span class="op">:</span><span class="dv">3</span>)]</span>
+<span id="cb15-8"><a href="#cb15-8"></a><span class="co">#&gt; $Vg</span></span>
+<span id="cb15-9"><a href="#cb15-9"></a><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span id="cb15-10"><a href="#cb15-10"></a><span class="co">#&gt; [1,]  2.7372540 -0.4041481</span></span>
+<span id="cb15-11"><a href="#cb15-11"></a><span class="co">#&gt; [2,] -0.4041481  0.7434534</span></span>
+<span id="cb15-12"><a href="#cb15-12"></a><span class="co">#&gt; </span></span>
+<span id="cb15-13"><a href="#cb15-13"></a><span class="co">#&gt; $Ve</span></span>
+<span id="cb15-14"><a href="#cb15-14"></a><span class="co">#&gt;           [,1]      [,2]</span></span>
+<span id="cb15-15"><a href="#cb15-15"></a><span class="co">#&gt; [1,] 0.1495667 0.2759642</span></span>
+<span id="cb15-16"><a href="#cb15-16"></a><span class="co">#&gt; [2,] 0.2759642 0.5091793</span></span></code></pre></div>
 <p>The results, above, are accurate to within rounding.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
-<h2>References</h2>
-<div id="refs" class="references">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references hanging-indent">
 <div id="ref-zhou2014efficient">
-<p>Zhou, Xiang, and Matthew Stephens. 2014. “Efficient Multivariate Linear Mixed Model Algorithms for Genome-Wide Association Studies.” <em>Nature Methods</em> 11 (4). Nature Research: 407–9.</p>
+<p>Zhou, Xiang, and Matthew Stephens. 2014. “Efficient Multivariate Linear Mixed Model Algorithms for Genome-Wide Association Studies.” <em>Nature Methods</em> 11 (4): 407–9.</p>
 </div>
 </div>
 </div>

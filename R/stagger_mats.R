@@ -12,3 +12,5 @@
 stagger_mats <- function(...){
   return(as.matrix(Matrix::bdiag(...)))
 }
+
+
